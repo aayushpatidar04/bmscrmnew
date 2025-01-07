@@ -29,7 +29,6 @@ frappe.pages['schedule-tomorrow'].on_page_load = function(wrapper) {
 	});
 	$(document).ready(function () {
 
-
 		$(document).on('click', '#select-day', function () {
 			var menu = $('#select-day-menu');
         
@@ -79,7 +78,6 @@ frappe.pages['schedule-tomorrow'].on_page_load = function(wrapper) {
 				}
 			});
 		});
-
 
 		let liveMap = null;
 
@@ -238,7 +236,7 @@ frappe.pages['schedule-tomorrow'].on_page_load = function(wrapper) {
 					method: "field_service_management.field_service_management.page.schedule_board.schedule_board.get_live_locations",
 					callback: function (r) {
 						if (r.message) {
-							const { technicians, maintenance } = r.message;
+							const { technicians} = r.message;
 
 							// Clear existing markers before adding new ones
 							liveMap.eachLayer(function (layer) {
@@ -255,57 +253,57 @@ frappe.pages['schedule-tomorrow'].on_page_load = function(wrapper) {
 							});
 
 							// Add maintenance visit markers
-							maintenance.forEach(visit => {
-								let customerLat = null;
-								let customerLng = null;
-								if (visit.geolocation && visit.geolocation.features && Array.isArray(visit.geolocation.features)) {
-									visit.geolocation.features.forEach(function(feature) {
-										const { properties, geometry } = feature;
+							// maintenance.forEach(visit => {
+							// 	let customerLat = null;
+							// 	let customerLng = null;
+							// 	if (visit.geolocation && visit.geolocation.features && Array.isArray(visit.geolocation.features)) {
+							// 		visit.geolocation.features.forEach(function(feature) {
+							// 			const { properties, geometry } = feature;
 										
-										// Extract latitude and longitude from coordinates
-										const [lng, lat] = geometry.coordinates;
+							// 			// Extract latitude and longitude from coordinates
+							// 			const [lng, lat] = geometry.coordinates;
 								
-										// Check if properties are empty
-										if (Object.keys(properties).length === 0) {
-											customerLat = lat;
-											customerLng = lng;
-										} else if (properties.point_type === 'circle' && properties.radius) {
-											// Handle case for circle type with radius
-											L.circle([lat, lng], {
-												radius: properties.radius,
-												color: 'blue',
-												fillColor: '#30a0ff',
-												fillOpacity: 0.3
-											}).addTo(map).bindPopup(`<b>Circle with radius: ${properties.radius} meters</b>`);
-										}
-									});
-								} else {
-									console.error('Geolocation data is not in the correct format or missing');
-								}
+							// 			// Check if properties are empty
+							// 			if (Object.keys(properties).length === 0) {
+							// 				customerLat = lat;
+							// 				customerLng = lng;
+							// 			} else if (properties.point_type === 'circle' && properties.radius) {
+							// 				// Handle case for circle type with radius
+							// 				L.circle([lat, lng], {
+							// 					radius: properties.radius,
+							// 					color: 'blue',
+							// 					fillColor: '#30a0ff',
+							// 					fillOpacity: 0.3
+							// 				}).addTo(map).bindPopup(`<b>Circle with radius: ${properties.radius} meters</b>`);
+							// 			}
+							// 		});
+							// 	} else {
+							// 		console.error('Geolocation data is not in the correct format or missing');
+							// 	}
 
-								if(visit.type == 'Unscheduled'){
-									finalIcon = redIcon;
-								} else if(visit.type == 'Fresh Installation'){
-									finalIcon = whiteIcon;
-								}else if(visit.type == 'Scheduled'){
-									finalIcon = greenIcon;
-								}else if(visit.type == 'Rescheduled'){
-									finalIcon = blackIcon;
-								}else if(visit.type == 'Site Survey'){
-									finalIcon = blueIcon;
-								}
-								if(visit.status == 'Approval Pending'){
-									finalIcon = yellowIcon;
-								}
+							// 	if(visit.type == 'Unscheduled'){
+							// 		finalIcon = redIcon;
+							// 	} else if(visit.type == 'Fresh Installation'){
+							// 		finalIcon = whiteIcon;
+							// 	}else if(visit.type == 'Scheduled'){
+							// 		finalIcon = greenIcon;
+							// 	}else if(visit.type == 'Rescheduled'){
+							// 		finalIcon = blackIcon;
+							// 	}else if(visit.type == 'Site Survey'){
+							// 		finalIcon = blueIcon;
+							// 	}
+							// 	if(visit.status == 'Approval Pending'){
+							// 		finalIcon = yellowIcon;
+							// 	}
 								
 								
-								if (customerLat !== null && customerLng !== null) {
-									liveMap.setView([customerLat, customerLng], 7);
-									L.marker([customerLat, customerLng], { icon: finalIcon })
-										.addTo(liveMap)
-										.bindPopup(`<b>Maintenance Visit</b><br>${visit.visit_id} - ${visit.type} - ${visit.status}<br><b>${visit.customer}</b><br>${visit.address}`);
-								}
-							});
+							// 	if (customerLat !== null && customerLng !== null) {
+							// 		liveMap.setView([customerLat, customerLng], 7);
+							// 		L.marker([customerLat, customerLng], { icon: finalIcon })
+							// 			.addTo(liveMap)
+							// 			.bindPopup(`<b>Maintenance Visit</b><br>${visit.visit_id} - ${visit.type} - ${visit.status}<br><b>${visit.customer}</b><br>${visit.address}`);
+							// 	}
+							// });
 						} else {
 							console.log("No data returned from the server.");
 						}
@@ -527,3 +525,5 @@ frappe.pages['schedule-tomorrow'].on_page_load = function(wrapper) {
 
 	});
 }
+
+

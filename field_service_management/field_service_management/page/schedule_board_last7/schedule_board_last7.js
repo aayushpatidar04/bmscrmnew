@@ -44,10 +44,10 @@ frappe.pages['schedule-board-last7'].on_page_load = function(wrapper) {
 			if (!$(e.target).closest('.dropdown').length) {
 				$('#select-day-menu').css('display', 'none');
 			}
-		});		
+		});
 
 		let liveMap = null;
-		
+
 		$(document).on('click', 'a[data-id]', function () {
 			const modalId = $(this).data('id'); // Get the modal ID
 			$(`#${modalId}`).removeClass('hide').addClass('show'); // Toggle classes
@@ -299,7 +299,6 @@ frappe.pages['schedule-board-last7'].on_page_load = function(wrapper) {
 				$(this).closest('.modal').removeClass('show').addClass('hide');
 			});
 			$('.technician').select2();
-
 
 			$('.nav-link').on('click', function(event) {
 				// Prevent default action

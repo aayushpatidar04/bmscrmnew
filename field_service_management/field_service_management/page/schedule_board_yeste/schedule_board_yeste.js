@@ -1,4 +1,4 @@
-frappe.pages['schedule-board-yeste'].on_page_load = function (wrapper) {
+frappe.pages['schedule-board-yeste'].on_page_load = function(wrapper) {
 	var page = frappe.ui.make_app_page({
 		parent: wrapper,
 		title: 'Schedule Board Yesterday',
@@ -6,13 +6,13 @@ frappe.pages['schedule-board-yeste'].on_page_load = function (wrapper) {
 	});
 	const pageKey = 'reload_schedule_board_yeste';
 
-	// Check if this page has been visited before
-	if (!localStorage.getItem(pageKey)) {
-		// If it's the first time, reload the page
-		localStorage.setItem(pageKey, 'visited'); // Mark the page as visited
-		window.location.reload(); // Reload the page
-		return; // Exit the function to avoid further execution
-	}
+    // Check if this page has been visited before
+    if (!localStorage.getItem(pageKey)) {
+        // If it's the first time, reload the page
+        localStorage.setItem(pageKey, 'visited'); // Mark the page as visited
+        window.location.reload(); // Reload the page
+        return; // Exit the function to avoid further execution
+    }
 	localStorage.removeItem(pageKey);
 
 	page.set_title("Schedule Board Yesterday");
@@ -293,28 +293,26 @@ frappe.pages['schedule-board-yeste'].on_page_load = function (wrapper) {
 					}
 				});
 			});
-
+			
 			$(document).on('click', '.close', function () {
-				$(this).closest('.modal').removeClass('show').addClass('hide');				
+				$(this).closest('.modal').removeClass('show').addClass('hide');
 			});
 			$('.technician').select2();
 
-
-			$('.nav-link').on('click', function (event) {
+			$('.nav-link').on('click', function(event) {
 				// Prevent default action
 				event.preventDefault();
-
+	
 				$('.nav-link').removeClass('active');
 				$('.tab-pane').removeClass('show active');
-
+	
 				$(this).addClass('active');
-
+	
 				var contentId = $(this).attr('aria-controls');
-
-				$('#' + contentId).addClass('show active');
+				
+				$('#' + contentId ).addClass('show active');
 			});
 		}, 1000);
 
 	});
-
 }

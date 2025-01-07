@@ -42,60 +42,6 @@ def get_delivery_notes(customer, doctype, txt, searchfield, start, page_len, fil
 
     return formatted_addresses
 
-# @frappe.whitelist(allow_guest=True)
-# def get_delivery_notes(customer, doctype, txt, searchfield, start, page_len, filters):
-#     if customer:
-#         addresses = frappe.db.get_all(
-#             "Delivery Note",
-#             filters={"customer": customer},
-#             fields=["DISTINCT shipping_address"],
-#         )
-#         return [(address.shipping_address,) for address in addresses if address.shipping_address]
-    
-
-
-# @frappe.whitelist(allow_guest=True)
-# def get_items_for_address(doctype, txt, searchfield, start, page_len, filters):
-
-#     # Extract the shipping_address from filters
-#     shipping_address = filters.get('shipping_address') if filters else None
-
-#     if not shipping_address:
-#         return []
-
-#     # Fetch delivery notes with the selected shipping address
-#     delivery_notes = frappe.db.get_all(
-#         "Delivery Note",
-#         filters={"shipping_address": shipping_address},
-#         fields=["name"]
-#     )
-
-#     # Fetch items and their serial numbers from Delivery Note Items
-#     items = []
-#     for note in delivery_notes:
-#         delivery_note_items = frappe.db.get_all(
-#             "Delivery Note Item",
-#             filters={"parent": note.name},  # Link between Delivery Note and Delivery Note Item
-#             fields=["item_code", "item_name", "serial_no", "parent"]
-#         )
-#         # items.extend(delivery_note_items)
-
-#         item_codes = [item["item_code"] for item in delivery_note_items]
-#         flags = frappe.db.get_all(
-#             "Item",
-#             filters={"item_code": ["in", item_codes]},
-#             fields=["item_code", "custom_flag"]
-#         )
-#         flag_map = {f["item_code"]: f["custom_flag"] for f in flags}
-#         filtered_items = [item for item in delivery_note_items if flag_map.get(item["item_code"]) == '1']
-#         items.extend(filtered_items)
-
-#     # Return the items in the expected format (value and description)
-#     return [
-#         (item["item_code"], f"<b>{item['item_name']}</b> | {item.get('serial_no', 'None')} | {item['parent']}")  # Passing the whole item object
-#         for item in items
-#     ]
-
 
 @frappe.whitelist(allow_guest=True)
 def get_items_for_address(doctype, txt, searchfield, start, page_len, filters):
@@ -154,35 +100,6 @@ def get_delivery_note_data(delivery_address, item_code):
 
     return items
 
-# @frappe.whitelist(allow_guest=True)
-# def get_delivery_note_data(delivery_address, item_code):
-#     if not frappe.has_permission("Delivery Note", "read"):
-#         frappe.throw("You do not have permission to access Delivery Notes.")
-
-#     # Fetch matching Delivery Notes
-#     delivery_notes = frappe.get_list(
-#         "Delivery Note",
-#         filters={"shipping_address": delivery_address},
-#         fields=["name"]
-#     )
-#     if not delivery_notes:
-#         return []
-
-#     # Extract the names of matching Delivery Notes
-#     delivery_note_names = [dn["name"] for dn in delivery_notes]
-
-#     # Fetch Delivery Note Items
-#     items = frappe.db.sql(
-#         """
-#         SELECT item_code, item_name, serial_no, parent AS delivery_note
-#         FROM `tabDelivery Note Item`
-#         WHERE item_code = %s AND parent IN %s
-#         """,
-#         (item_code, tuple(delivery_note_names)),
-#         as_dict=True
-#     )
-
-#     return items
 
 
 @frappe.whitelist(allow_guest=True)

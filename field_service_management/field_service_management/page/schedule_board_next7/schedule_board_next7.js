@@ -79,7 +79,6 @@ frappe.pages['schedule-board-next7'].on_page_load = function(wrapper) {
 			});
 		});
 
-
 		let liveMap = null;
 
 		$(document).on('click', 'a[data-id]', function () {
@@ -471,7 +470,6 @@ frappe.pages['schedule-board-next7'].on_page_load = function(wrapper) {
 				$(this).closest('.modal').removeClass('show').addClass('hide');
 			});
 			$('.technician').select2();
-
 
 			$('.nav-link').on('click', function(event) {
 				// Prevent default action

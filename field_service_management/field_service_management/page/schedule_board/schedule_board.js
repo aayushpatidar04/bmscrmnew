@@ -4,15 +4,15 @@ frappe.pages['schedule-board'].on_page_load = function (wrapper) {
 		title: 'Schedule Board',
 		single_column: true
 	});
-
+	
 
 	const pageKey = 'reload_schedule_board';
 
-	if (!localStorage.getItem(pageKey)) {
-		localStorage.setItem(pageKey, 'visited'); // Mark the page as visited
-		window.location.reload(); // Reload the page
-		return; // Exit the function to avoid further execution
-	}
+    if (!localStorage.getItem(pageKey)) {
+        localStorage.setItem(pageKey, 'visited'); // Mark the page as visited
+        window.location.reload(); // Reload the page
+        return; // Exit the function to avoid further execution
+    }
 	localStorage.removeItem(pageKey);
 
 
@@ -28,12 +28,12 @@ frappe.pages['schedule-board'].on_page_load = function (wrapper) {
 		}
 	});
 
-
+	
 	$(document).ready(function () {
 
 		$(document).on('click', '#select-day', function () {
 			var menu = $('#select-day-menu');
-
+        
 			if (menu.css('display') === 'none') {
 				menu.css('display', 'block'); // Show the menu
 			} else {
@@ -46,8 +46,6 @@ frappe.pages['schedule-board'].on_page_load = function (wrapper) {
 				$('#select-day-menu').css('display', 'none');
 			}
 		});
-
-
 
 		$(document).on("click", ".submit", function () {
 			const issueId = $(this).data("issue");
@@ -83,10 +81,7 @@ frappe.pages['schedule-board'].on_page_load = function (wrapper) {
 			});
 		});
 
-
-
 		let liveMap = null;
-
 
 		$(document).on('click', 'a[data-id]', function () {
 			const modalId = $(this).data('id'); // Get the modal ID
@@ -174,7 +169,7 @@ frappe.pages['schedule-board'].on_page_load = function (wrapper) {
 			}
 		});
 
-		$(document).on('click', '#mapModalBtn', function () {
+		$(document).on('click', '#mapModalBtn', function () { 	
 			modal = $('#mapModal');
 			modal.removeClass('hide').addClass('show');
 			const mapContainerId = 'live-map-container';
@@ -264,12 +259,12 @@ frappe.pages['schedule-board'].on_page_load = function (wrapper) {
 								let customerLat = null;
 								let customerLng = null;
 								if (visit.geolocation && visit.geolocation.features && Array.isArray(visit.geolocation.features)) {
-									visit.geolocation.features.forEach(function (feature) {
+									visit.geolocation.features.forEach(function(feature) {
 										const { properties, geometry } = feature;
-
+										
 										// Extract latitude and longitude from coordinates
 										const [lng, lat] = geometry.coordinates;
-
+								
 										// Check if properties are empty
 										if (Object.keys(properties).length === 0) {
 											customerLat = lat;
@@ -287,23 +282,23 @@ frappe.pages['schedule-board'].on_page_load = function (wrapper) {
 								} else {
 									console.error('Geolocation data is not in the correct format or missing');
 								}
-								if (visit.type == 'Unscheduled') {
+								if(visit.type == 'Unscheduled'){
 									finalIcon = redIcon;
-								} else if (visit.type == 'Fresh Installation') {
+								} else if(visit.type == 'Fresh Installation'){
 									finalIcon = whiteIcon;
-								} else if (visit.type == 'Scheduled') {
+								}else if(visit.type == 'Scheduled'){
 									finalIcon = greenIcon;
-								} else if (visit.type == 'Rescheduled') {
+								}else if(visit.type == 'Rescheduled'){
 									finalIcon = blackIcon;
-								} else if (visit.type == 'Site Survey') {
+								}else if(visit.type == 'Site Survey'){
 									finalIcon = blueIcon;
 								}
-								if (visit.status == 'Approval Pending') {
+								if(visit.status == 'Approval Pending'){
 									finalIcon = yellowIcon;
 								}
 
 								if (customerLat !== null && customerLng !== null) {
-									liveMap.setView([customerLat, customerLng], 7);
+									liveMap.setView([customerLat, customerLng],7);
 									L.marker([customerLat, customerLng], { icon: finalIcon })
 										.addTo(liveMap)
 										.bindPopup(`<b>Maintenance Visit</b><br>${visit.visit_id} - ${visit.type} - ${visit.status}<br><b>${visit.customer}</b><br>${visit.address}`);
@@ -323,7 +318,6 @@ frappe.pages['schedule-board'].on_page_load = function (wrapper) {
 			updateInterval = setInterval(fetchAndDisplayLocations, 120000);
 		});
 
-
 		setTimeout(function () {
 
 			var scrollableSections = $(".scrollable-x");
@@ -341,24 +335,24 @@ frappe.pages['schedule-board'].on_page_load = function (wrapper) {
 				event.originalEvent.dataTransfer.setData('text/plain', draggable.attr('id'));
 				draggable.css('opacity', '0.5');
 			});
-
+		
 			$(document).on('dragend', '.drag', function () {
 				$(this).css('opacity', '1');
 			});
-
+		
 			$(document).on('dragover', '.drop-zone', function (event) {
 				event.preventDefault();
 				const dropZone = $(this);
 				dropZone.addClass('drop-hover');
 				dropZone.css('background-color', 'green');
 			});
-
+		
 			$(document).on('dragleave', '.drop-zone', function () {
 				const dropZone = $(this);
 				dropZone.removeClass('drop-hover');
 				dropZone.css('background-color', 'cyan');
 			});
-
+		
 			$(document).on('drop', '.drop-zone', function (event) {
 				event.preventDefault();
 				const dropZone = $(this);
@@ -369,7 +363,7 @@ frappe.pages['schedule-board'].on_page_load = function (wrapper) {
 				const card = $(`#${cardId}`);
 				dropZone.removeClass('drop-hover');
 				dropZone.css('background-color', 'cyan');
-
+		
 				if (card.data('type') === 'type1') {
 					openModal(cardId, slotTime, tech, not_available);
 				} else if (card.data('type') === 'type2') {
@@ -478,7 +472,6 @@ frappe.pages['schedule-board'].on_page_load = function (wrapper) {
 			});
 			$('.technician').select2();
 
-
 			$('.nav-link').on('click', function (event) {
 				// Prevent default action
 				event.preventDefault();
@@ -530,8 +523,9 @@ frappe.pages['schedule-board'].on_page_load = function (wrapper) {
 
 		});
 
-
 	});
 
 
 }
+
+

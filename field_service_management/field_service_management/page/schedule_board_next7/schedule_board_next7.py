@@ -83,10 +83,12 @@ def get_context(context=None):
                 issue._assign = " | ".join(assign_list)
             except json.JSONDecodeError:
                 issue._assign = "No one assigned"
-
+        else:
+            issue._assign = "No one assigned"
         #geolocation --------------------------------------------------
         geolocation = frappe.get_all('Address', filters = {'name' : issue.customer_address}, fields = ['geolocation'])
         geolocation = json.loads(geolocation[0].geolocation)
+        print(geolocation)
         issue.geolocation = json.dumps(geolocation['features']).replace('"', "'")
         # issue.geolocation = geolocation
         # checklist tree ----------------------------------------------
@@ -179,7 +181,7 @@ def get_context(context=None):
         tasks = frappe.get_all(
             "Assigned Tasks",
             filters={"date": ["in", dates], "technician": tech.email},
-            fields=["issue_code", "stime", "etime", "rescheduled", "date"],
+            fields=["issue_code", "stime", "etime", "date"],
             order_by="date, stime"
         )
         tasks_by_date = {date: [] for date in dates}
@@ -226,7 +228,6 @@ def get_context(context=None):
                 if slot['label'] == '03' and afternoon == 1:
                     count += 6
                     html_content += f'<div style="width: 150px; border-right: 1px solid #000; color: white; background-color: red;" data-tech="{tech.email}" class="px-1">Leave</div>'
-
                 if slot['label'] == '12':
                     if(count >= 1):
                         count -=1
@@ -239,7 +240,7 @@ def get_context(context=None):
                     ts = frappe.get_all(
                         "Assigned Tasks",
                         filters={"date": date},
-                        fields=["issue_code", "stime", "etime", "rescheduled", "technician"],
+                        fields=["issue_code", "stime", "etime", "technician"],
                     )
                     for t in ts:
                         if t.stime <= slot["time"] and t.etime > slot["time"]:
@@ -281,7 +282,7 @@ def get_context(context=None):
                                             <label for="technician">Select Co-Technicians (<span class="text-danger">only if more than one technician required</span>):</label><br>
                                             <select class="form-select technician" style="width:100%" name="technician[]" multiple="multiple" required>"""
                         for item in technicians:
-                            selected = 'selected' if item.email in maintenance._assign else ''
+                            selected = 'selected' if maintenance._assign and item.email in maintenance._assign else ''
                             html_content += '<option value="{email}" {selected}>{email}</option>'.format(
                                 email=item.email,
                                 selected=selected
@@ -383,11 +384,13 @@ def save_form_data(form_data):
                 if tech not in existing_techs:
                     existing_techs.append(tech)
             issue_doc._assign = json.dumps(existing_techs)
+            issue_doc.visit_count = int(issue_doc.visit_count or 0) + 1
+
             frappe.db.sql(
                 """
-                UPDATE `tabMaintenance Visit` SET `_assign` = %s, `maintenance_type` = %s WHERE name = %s
+                UPDATE `tabMaintenance Visit` SET `_assign` = %s, `maintenance_type` = %s, `visit_count` = %s WHERE name = %s
             """,
-                (json.dumps(existing_techs), 'Scheduled', code),
+                (json.dumps(existing_techs), 'Scheduled', issue_doc.visit_count, code),
             )
 
             frappe.db.commit()
@@ -494,11 +497,12 @@ def update_form_data(form_data):
                 )
             else:
                 issue_doc._assign = ""
+                issue_doc.visit_count = int(issue_doc.visit_count or 1) - 1
                 frappe.db.sql(
                 """
-                    UPDATE `tabMaintenance Visit` SET `_assign` = %s, `maintenance_type` = %s WHERE name = %s
+                    UPDATE `tabMaintenance Visit` SET `_assign` = %s, `maintenance_type` = %s, `visit_count` = %s WHERE name = %s
                 """,
-                    ("", 'Unscheduled', code),
+                    ("", 'Unscheduled', issue_doc.visit_count, code),
                 )
 
             frappe.db.commit()
@@ -528,7 +532,7 @@ def get_live_locations():
         })
     
     maintenance_records = frappe.db.sql("""
-        SELECT name, delivery_address, customer, maintenance_type, completion_status
+        SELECT name, delivery_addres, customer, maintenance_type, completion_status
         FROM `tabMaintenance Visit`
         WHERE completion_status != 'Fully Completed'
     """, as_dict=True)
@@ -536,32 +540,26 @@ def get_live_locations():
 
     for visit in maintenance_records:
         visit_doc = frappe.get_doc("Maintenance Visit", visit.name)
+
         #geolocation
-        
         delivery_note_name = frappe.get_value(
             "Serial No",
-            {"custom_item_current_installation_address": visit_doc.delivery_address},
+            {"custom_item_current_installation_address": visit_doc.delivery_addres},
             "custom_item_current_installation_address_name"
         )
         if not delivery_note_name:
-            frappe.throw(f"No Delivery Note found for address: {visit_doc.delivery_address}")
+            frappe.throw(f"No Serial No found for address: {visit_doc.delivery_addres}")
         geolocation = frappe.get_all('Address', filters = {'name' : delivery_note_name}, fields = ['geolocation'])
-        geolocation = json.loads(geolocation[0].geolocation)
         if geolocation:
-            if isinstance(geolocation, str):
-                try:
-                    geolocation = json.loads(geolocation)
-                except json.JSONDecodeError:
-                    frappe.log_error(f"Invalid geolocation data for address: {delivery_note_name}", "Field Service Management")
-                    geolocation = None
-            elif not isinstance(geolocation, dict):
-                frappe.log_error(f"Unexpected geolocation format for address: {delivery_note_name}", "Field Service Management")
-                geolocation = None
+            geolocation = json.loads(geolocation[0].geolocation)
+        else:
+            frappe.log_error(f"Invalid geolocation JSON for address: {delivery_note_name}", "Field Service Management")
+            geolocation = None
 
         maintenance_visits.append({
             "visit_id": visit.name,
             "geolocation": geolocation,
-            "address": visit.delivery_address,
+            "address": visit.delivery_addres,
             "customer": visit.customer,
             "type": visit.maintenance_type,
             "status": visit.completion_status

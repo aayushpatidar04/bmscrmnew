@@ -79,9 +79,7 @@ def get_maintenance():
         },
         fields="name"
     )
-    
-
-
+   
     visits_with_details = []
     for visit in maintenance_visits:
         visit_doc = frappe.get_doc("Maintenance Visit", visit.name)
@@ -100,7 +98,6 @@ def get_maintenance():
             "visit_start": latest_visit_start if latest_visit_start else "",
         })
 
-
         #start-end time
         assigned_task = frappe.get_all(
             "Assigned Tasks",
@@ -115,7 +112,7 @@ def get_maintenance():
         visit_data['start_time'] = assigned_task[0].stime if assigned_task else ""
         visit_data['end_time'] = assigned_task[0].etime if assigned_task else ""
 
-        
+
         #punch-in-punch-out
         latest_punch_in = frappe.db.get_value(
             "Punch In Punch Out",
@@ -141,22 +138,15 @@ def get_maintenance():
         visit_data["latest_punch_out"] = latest_punch_out if latest_punch_out else ""
 
 
-
         #geolocation
         delivery_note_name = frappe.get_value(
-            "Delivery Note",
-            {"shipping_address": visit_doc.delivery_address},
-            "name"  # Fetch the name of the Delivery Note
+            "Serial No",
+            {"custom_item_current_installation_address": visit_doc.delivery_addres},
+            "custom_item_current_installation_address_name"
         )
-
         if not delivery_note_name:
-            frappe.throw(f"No Delivery Note found for address: {visit_doc.delivery_address}")
-
-        # Get the full Delivery Note document
-        delivery_note = frappe.get_doc("Delivery Note", delivery_note_name)
-
-        # Get the associated Address document
-        address = frappe.get_doc("Address", delivery_note.shipping_address_name)
+            frappe.throw(f"No Serial No found for address: {visit_doc.delivery_addres}")
+        address = frappe.get_doc("Address", delivery_note_name)
         geolocation = address.geolocation
 
         if not geolocation:
@@ -183,7 +173,6 @@ def get_maintenance():
             symptoms_table[item_code].append(item.as_dict())
         
         # Create a dictionary for the current visit, including the reformatted child tables
-       
         visit_data['checktree_description'] = checktree_description
         visit_data['symptoms_table'] = symptoms_table
         
@@ -191,6 +180,7 @@ def get_maintenance():
         visits_with_details.append(visit_data)
     
     return visits_with_details
+
 
 @frappe.whitelist(allow_guest=True)
 def update_spare_item(status, name):
@@ -261,8 +251,8 @@ def start_maintenance_visit(name):
         frappe.db.commit()
 
         maintenance.reload()
-        # if maintenance.visit_start is None:
-            # maintenance.visit_start = now()
+        if maintenance.visit_start is None:
+            maintenance.visit_start = now()
         maintenance.flags.ignore_permissions = True
         maintenance.save()
         
@@ -376,14 +366,13 @@ def update_punch_in_out(maintenance_visit, punch_in=None, punch_out=None, visit_
             existing_record.save(ignore_permissions=True)
             frappe.db.commit()
             status_msg = "Punch-out recorded"
-            if is_completed == 'yes':
-                status_msg += " and visit marked as Approval Pending"
-                frappe.db.sql(
-                """
-                    UPDATE `tabMaintenance Visit` SET `completion_status` = %s WHERE name = %s
-                """,
-                    ('Approval Pending', maintenance_visit),
-                )
+            status_msg += " and visit marked as Approval Pending"
+            frappe.db.sql(
+            """
+                UPDATE `tabMaintenance Visit` SET `completion_status` = %s WHERE name = %s
+            """,
+                ('Approval Pending', maintenance_visit),
+            )
             return {"status": "success", "message": status_msg}
         else:
             frappe.throw("No active punch-in record found to update.")
@@ -464,16 +453,13 @@ def get_maintenance_(name = None):
 
     #geolocation
     delivery_note_name = frappe.get_value(
-        "Delivery Note",
-        {"shipping_address": visit_doc.delivery_address},
-        "name"  # Fetch the name of the Delivery Note
+        "Serial No",
+        {"custom_item_current_installation_address": visit_doc.delivery_addres},
+        "custom_item_current_installation_address_name"
     )
     if not delivery_note_name:
-        frappe.throw(f"No Delivery Note found for address: {visit_doc.delivery_address}")
-    # Get the full Delivery Note document
-    delivery_note = frappe.get_doc("Delivery Note", delivery_note_name)
-    # Get the associated Address document
-    address = frappe.get_doc("Address", delivery_note.shipping_address_name)
+        frappe.throw(f"No Serial No found for address: {visit_doc.delivery_addres}")
+    address = frappe.get_doc("Address", delivery_note_name)
     geolocation = address.geolocation
     if not geolocation:
         frappe.throw(f"No geolocation found for address: {address.name}")
@@ -502,6 +488,7 @@ def get_maintenance_(name = None):
     visit_data['symptoms_table'] = symptoms_table
 
     return visit_data
+
 
 @frappe.whitelist(allow_guest=True)
 def update_checktree(status, name):
@@ -799,7 +786,6 @@ def add_reschedule_requests(maintenance_visit, type, reason, date, hours):
     frappe.db.commit()
     return {"status": "success", "message": "Reschedule Request submitted successfully!"}
 
-
 @frappe.whitelist(allow_guest=True)
 def update_shipping_address():
     # Get all rows with a valid delivery_document_no
@@ -903,3 +889,15 @@ def populate_initial_serial_card_history():
         "message": f"{updated_count} Serial No records updated successfully."
     }
 
+
+@frappe.whitelist(allow_guest=True)
+def delete_all_serial_card_history():
+    try:
+        # Delete all records from the 'Serial Card History' table
+        frappe.db.sql("DELETE FROM `tabSerial Card History`")
+        frappe.db.commit()
+        
+        return {"message": "All records from 'Serial Card History' table have been deleted successfully."}
+    except Exception as e:
+        frappe.log_error(message=str(e), title="Error Deleting Serial Card History")
+        frappe.throw(f"An error occurred while deleting records: {str(e)}")
